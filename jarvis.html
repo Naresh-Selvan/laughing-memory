@@ -1,0 +1,531 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>JARVIS - Full Control Interface</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #0f0c29, #302b63, #24243e);
+            color: #fff;
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        .container {
+            display: flex;
+            height: 100vh;
+        }
+
+        /* Sidebar */
+        .sidebar {
+            width: 280px;
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(10px);
+            border-right: 1px solid rgba(255, 255, 255, 0.1);
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            overflow-y: auto;
+        }
+
+        .logo {
+            font-size: 28px;
+            font-weight: bold;
+            margin-bottom: 30px;
+            color: #00d4ff;
+            text-align: center;
+        }
+
+        .section-title {
+            margin: 20px 0 10px 0;
+            font-size: 14px;
+            color: rgba(255,255,255,0.6);
+            text-transform: uppercase;
+        }
+
+        .action-btn {
+            width: 100%;
+            padding: 12px;
+            margin-bottom: 10px;
+            background: rgba(0, 212, 255, 0.1);
+            border: 1px solid rgba(0, 212, 255, 0.3);
+            color: #00d4ff;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-size: 14px;
+            text-align: left;
+        }
+
+        .action-btn:hover {
+            background: rgba(0, 212, 255, 0.2);
+            transform: translateX(5px);
+        }
+
+        .action-btn:active {
+            transform: scale(0.95);
+        }
+
+        .status {
+            padding: 15px;
+            background: rgba(0, 255, 100, 0.1);
+            border-radius: 8px;
+            text-align: center;
+            font-size: 12px;
+            color: #00ff64;
+            margin-top: auto;
+        }
+
+        .status.offline {
+            background: rgba(255, 0, 0, 0.1);
+            color: #ff4444;
+        }
+
+        /* Main Content */
+        .main-content {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            padding: 30px;
+        }
+
+        .header {
+            margin-bottom: 30px;
+        }
+
+        .header h1 {
+            font-size: 32px;
+            margin-bottom: 10px;
+        }
+
+        .header p {
+            color: rgba(255, 255, 255, 0.6);
+        }
+
+        /* Chat Container */
+        .chat-container {
+            flex: 1;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 16px;
+            padding: 20px;
+            overflow-y: auto;
+            margin-bottom: 20px;
+            backdrop-filter: blur(10px);
+        }
+
+        .message {
+            margin-bottom: 20px;
+            animation: fadeIn 0.3s;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .message.user {
+            text-align: right;
+        }
+
+        .message-bubble {
+            display: inline-block;
+            padding: 12px 18px;
+            border-radius: 18px;
+            max-width: 70%;
+            word-wrap: break-word;
+        }
+
+        .message.user .message-bubble {
+            background: linear-gradient(135deg, #00d4ff, #0099cc);
+            color: white;
+        }
+
+        .message.jarvis .message-bubble {
+            background: rgba(255, 255, 255, 0.1);
+            color: #fff;
+        }
+
+        .message.system .message-bubble {
+            background: rgba(255, 165, 0, 0.2);
+            color: #ffa500;
+            font-size: 13px;
+        }
+
+        .timestamp {
+            font-size: 11px;
+            color: rgba(255, 255, 255, 0.4);
+            margin-top: 5px;
+        }
+
+        /* Input Area */
+        .input-container {
+            display: flex;
+            gap: 10px;
+            background: rgba(255, 255, 255, 0.05);
+            padding: 15px;
+            border-radius: 12px;
+            backdrop-filter: blur(10px);
+        }
+
+        #userInput {
+            flex: 1;
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            color: white;
+            padding: 12px 18px;
+            border-radius: 8px;
+            font-size: 15px;
+            outline: none;
+        }
+
+        #userInput::placeholder {
+            color: rgba(255, 255, 255, 0.4);
+        }
+
+        .btn {
+            padding: 12px 24px;
+            background: linear-gradient(135deg, #00d4ff, #0099cc);
+            border: none;
+            color: white;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: all 0.3s;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 20px rgba(0, 212, 255, 0.4);
+        }
+
+        .btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .typing-indicator {
+            display: none;
+            padding: 10px;
+            color: rgba(255, 255, 255, 0.6);
+            font-size: 14px;
+        }
+
+        .typing-indicator.active {
+            display: block;
+        }
+
+        /* Scrollbar */
+        .chat-container::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        .chat-container::-webkit-scrollbar-track {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 10px;
+        }
+
+        .chat-container::-webkit-scrollbar-thumb {
+            background: rgba(0, 212, 255, 0.3);
+            border-radius: 10px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Sidebar -->
+        <div class="sidebar">
+            <div class="logo">⚡ JARVIS</div>
+            
+            <div class="section-title">Authentication</div>
+            <button class="action-btn" onclick="startFaceAuth()">📷 Face Recognition</button>
+            
+            <div class="section-title">System Control</div>
+            <button class="action-btn" onclick="executeCommand('lock system')">🔒 Lock System</button>
+            <button class="action-btn" onclick="executeCommand('sleep system')">💤 Sleep</button>
+            <button class="action-btn" onclick="executeCommand('shutdown')">⚡ Shutdown</button>
+            <button class="action-btn" onclick="executeCommand('battery')">🔋 Battery Status</button>
+            
+            <div class="section-title">Applications</div>
+            <button class="action-btn" onclick="executeCommand('open chrome')">🌐 Open Chrome</button>
+            <button class="action-btn" onclick="executeCommand('open spotify')">🎵 Open Spotify</button>
+            <button class="action-btn" onclick="executeCommand('open notepad')">📝 Open Notepad</button>
+            <button class="action-btn" onclick="executeCommand('open calculator')">🔢 Calculator</button>
+            
+            <div class="section-title">Volume</div>
+            <button class="action-btn" onclick="executeCommand('volume up')">🔊 Volume Up</button>
+            <button class="action-btn" onclick="executeCommand('volume down')">🔉 Volume Down</button>
+            <button class="action-btn" onclick="executeCommand('mute')">🔇 Mute</button>
+            
+            <div class="section-title">Quick Info</div>
+            <button class="action-btn" onclick="executeCommand('time')">🕐 What time is it?</button>
+            <button class="action-btn" onclick="executeCommand('date')">📅 What's the date?</button>
+            
+            <div class="status" id="statusIndicator">
+                🔴 Connecting...
+            </div>
+        </div>
+
+        <!-- Main Content -->
+        <div class="main-content">
+            <div class="header">
+                <h1>JARVIS Control Interface</h1>
+                <p>Full system control via web interface</p>
+            </div>
+
+            <div class="chat-container" id="chatContainer">
+                <div class="message jarvis">
+                    <div class="message-bubble">
+                        JARVIS Web Interface initialized. I can control your system directly.<br><br>
+                        Try commands like:<br>
+                        • "Open Chrome"<br>
+                        • "What time is it?"<br>
+                        • "Volume up"<br>
+                        • "Battery status"
+                    </div>
+                    <div class="timestamp">Just now</div>
+                </div>
+            </div>
+
+            <div class="typing-indicator" id="typingIndicator">
+                JARVIS is processing...
+            </div>
+
+            <div class="input-container">
+                <input 
+                    type="text" 
+                    id="userInput" 
+                    placeholder="Type command or say 'Jarvis' + command..."
+                    onkeypress="handleKeyPress(event)"
+                >
+                <button class="btn" id="voiceBtn" onclick="toggleVoice()">🎤</button>
+                <button class="btn" id="sendBtn" onclick="sendCommand()">Send</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const BACKEND_URL = 'http://localhost:5000';
+        let isListening = false;
+        let recognition = null;
+        let isConnected = false;
+
+        // Initialize speech recognition
+        if ('webkitSpeechRecognition' in window) {
+            recognition = new webkitSpeechRecognition();
+            recognition.continuous = false;
+            recognition.interimResults = false;
+            recognition.lang = 'en-US';
+
+            recognition.onresult = function(event) {
+                const transcript = event.results[0][0].transcript;
+                document.getElementById('userInput').value = transcript;
+                sendCommand();
+            };
+
+            recognition.onend = function() {
+                isListening = false;
+                document.getElementById('voiceBtn').textContent = '🎤';
+            };
+        }
+
+        // Check backend connection
+        async function checkConnection() {
+            try {
+                const response = await fetch(`${BACKEND_URL}/api/status`);
+                const data = await response.json();
+                
+                if (data.online) {
+                    isConnected = true;
+                    updateStatus('online', `✅ Online<br><small>Python JARVIS Connected</small>`);
+                } else {
+                    isConnected = false;
+                    updateStatus('offline', '🔴 Backend Offline');
+                }
+            } catch (error) {
+                isConnected = false;
+                updateStatus('offline', '🔴 Backend Offline<br><small>Run: python web_bridge.py</small>');
+            }
+        }
+
+        function updateStatus(status, text) {
+            const indicator = document.getElementById('statusIndicator');
+            indicator.className = `status ${status}`;
+            indicator.innerHTML = text;
+        }
+
+        function toggleVoice() {
+            if (!recognition) {
+                addMessage('Voice recognition not supported in this browser', 'system');
+                return;
+            }
+
+            if (isListening) {
+                recognition.stop();
+                isListening = false;
+                document.getElementById('voiceBtn').textContent = '🎤';
+            } else {
+                recognition.start();
+                isListening = true;
+                document.getElementById('voiceBtn').textContent = '🔴';
+                addMessage('Listening... Say your command', 'system');
+            }
+        }
+
+        function handleKeyPress(event) {
+            if (event.key === 'Enter') {
+                sendCommand();
+            }
+        }
+
+        function executeCommand(command) {
+            document.getElementById('userInput').value = command;
+            sendCommand();
+        }
+
+        function addMessage(text, sender) {
+            const chatContainer = document.getElementById('chatContainer');
+            const messageDiv = document.createElement('div');
+            messageDiv.className = `message ${sender}`;
+            
+            const now = new Date();
+            const timeStr = now.toLocaleTimeString('en-US', { 
+                hour: '2-digit', 
+                minute: '2-digit' 
+            });
+
+            messageDiv.innerHTML = `
+                <div class="message-bubble">${text}</div>
+                <div class="timestamp">${timeStr}</div>
+            `;
+
+            chatContainer.appendChild(messageDiv);
+            chatContainer.scrollTop = chatContainer.scrollHeight;
+        }
+
+        function showTyping(show) {
+            const indicator = document.getElementById('typingIndicator');
+            indicator.className = show ? 'typing-indicator active' : 'typing-indicator';
+        }
+
+        function setButtonsEnabled(enabled) {
+            document.getElementById('sendBtn').disabled = !enabled;
+            document.getElementById('voiceBtn').disabled = !enabled;
+            document.getElementById('userInput').disabled = !enabled;
+        }
+
+        async function startFaceAuth() {
+            addMessage('Starting face authentication...', 'system');
+            showTyping(true);
+            setButtonsEnabled(false);
+
+            try {
+                const response = await fetch(`${BACKEND_URL}/api/face-auth`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    }
+                });
+
+                const data = await response.json();
+
+                if (data.success && data.authenticated) {
+                    addMessage(`✅ ${data.message}`, 'jarvis');
+                } else if (data.success) {
+                    addMessage(`❌ ${data.message}`, 'system');
+                } else {
+                    addMessage(`❌ Error: ${data.error}`, 'system');
+                }
+
+            } catch (error) {
+                console.error('Face auth error:', error);
+                addMessage(`❌ Face authentication failed: ${error.message}`, 'system');
+            } finally {
+                showTyping(false);
+                setButtonsEnabled(true);
+            }
+        }
+
+        async function sendCommand() {
+            const input = document.getElementById('userInput');
+            const command = input.value.trim();
+
+            if (!command) return;
+
+            // Add user message
+            addMessage(command, 'user');
+            input.value = '';
+
+            // Check connection
+            if (!isConnected) {
+                addMessage('❌ Backend not connected. Run: python web_bridge.py', 'system');
+                return;
+            }
+
+            // Show processing
+            showTyping(true);
+            setButtonsEnabled(false);
+
+            try {
+                console.log('Sending command:', command);
+                
+                // Send to Python JARVIS
+                const response = await fetch(`${BACKEND_URL}/api/command`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ command: command })
+                });
+
+                console.log('Response status:', response.status);
+                
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+
+                const data = await response.json();
+                console.log('Response data:', data);
+
+                if (data.success) {
+                    // Get response from JARVIS
+                    const jarvisResponse = data.response || 'Command executed sir.';
+                    addMessage(jarvisResponse, 'jarvis');
+                    
+                    console.log('Command successful:', jarvisResponse);
+                } else {
+                    addMessage(`❌ Error: ${data.error || 'Unknown error'}`, 'system');
+                    console.error('Command failed:', data.error);
+                }
+
+            } catch (error) {
+                console.error('Connection error:', error);
+                addMessage(`❌ Connection error: ${error.message}. Is web_bridge.py running?`, 'system');
+            } finally {
+                showTyping(false);
+                setButtonsEnabled(true);
+            }
+        }
+
+        // Initialize
+        window.addEventListener('load', () => {
+            checkConnection();
+            setInterval(checkConnection, 5000); // Check every 5 seconds
+            
+            // Welcome speech
+            if ('speechSynthesis' in window) {
+                const utterance = new SpeechSynthesisUtterance("JARVIS web interface ready sir.");
+                utterance.rate = 0.9;
+                speechSynthesis.speak(utterance);
+            }
+        });
+    </script>
+</body>
+</html>
